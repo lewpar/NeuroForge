@@ -1,4 +1,5 @@
 ﻿using NeuroForge.Server.Network;
+using NeuroForge.Server.Network.Events;
 
 namespace NeuroForge.TestServer
 {
@@ -11,7 +12,16 @@ namespace NeuroForge.TestServer
             nfServer.ClientConnected += NfServer_ClientConnected;
             nfServer.ServerStarted += NfServer_ServerStarted;
 
-            await nfServer.ListenAsync();
+            try
+            {
+                await nfServer.LoadCertificateAsync("MyCertificate");
+                await nfServer.ListenAsync();
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("The application encountered an unexpected error:");
+                Console.WriteLine(ex.ToString());
+            }
 
             Console.ReadLine();
         }
@@ -21,7 +31,7 @@ namespace NeuroForge.TestServer
             Console.WriteLine("Server started, listening for clients..");
         }
 
-        private static void NfServer_ClientConnected(object? sender, Server.Network.Event.ClientConnectedEventArgs e)
+        private static void NfServer_ClientConnected(object? sender, ClientConnectedEventArgs e)
         {
             Console.WriteLine($"Client '{e.Client.Client.RemoteEndPoint}' connected.");
         }

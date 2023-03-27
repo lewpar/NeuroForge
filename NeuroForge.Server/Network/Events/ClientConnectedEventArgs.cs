@@ -1,6 +1,6 @@
 ﻿using System.Net.Sockets;
 
-namespace NeuroForge.Server.Network.Event
+namespace NeuroForge.Server.Network.Events
 {
     public class ClientConnectedEventArgs : EventArgs
     {
