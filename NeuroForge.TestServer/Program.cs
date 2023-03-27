@@ -1,4 +1,6 @@
-﻿using NeuroForge.Server.Network;
+﻿using System.Security.Cryptography.X509Certificates;
+
+using NeuroForge.Server.Network;
 using NeuroForge.Server.Network.Events;
 
 namespace NeuroForge.TestServer
@@ -14,7 +16,7 @@ namespace NeuroForge.TestServer
 
             try
             {
-                await nfServer.LoadCertificateAsync("MyCertificate");
+                await nfServer.LoadCertificateAsync(StoreName.My, StoreLocation.LocalMachine, "TestCertificate");
                 await nfServer.ListenAsync();
             }
             catch(Exception ex)

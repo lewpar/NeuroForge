@@ -34,11 +34,11 @@ namespace NeuroForge.Server.Network
             _connectedClients = new List<TcpClient>();
         }
 
-        public async Task LoadCertificateAsync(string certName)
+        public async Task LoadCertificateAsync(StoreName storeName, StoreLocation storeLoc, string certName)
         {
             await Task.Run(() =>
             {
-                X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+                X509Store store = new X509Store(storeName, storeLoc);
                 store.Open(OpenFlags.ReadOnly);
 
                 X509Certificate2Collection certs = store.Certificates.Find(X509FindType.FindBySubjectName, certName, false);
