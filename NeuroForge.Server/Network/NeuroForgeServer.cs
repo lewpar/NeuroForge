@@ -7,8 +7,8 @@ namespace NeuroForge.Server.Network
 {
     public class NeuroForgeServer
     {
-        public event EventHandler<ClientConnectedEventArgs> ClientConnected;
-        public event EventHandler<EventArgs> ServerStarted;
+        public event EventHandler<ClientConnectedEventArgs>? ClientConnected;
+        public event EventHandler<EventArgs>? ServerStarted;
 
         private TcpListener _listener;
 
