@@ -7,8 +7,10 @@ namespace NeuroForge.TestServer
         public static async Task Main(string[] args)
         {
             var nfServer = new NeuroForgeServer(System.Net.IPAddress.Any, 4411);
+
             nfServer.ClientConnected += NfServer_ClientConnected;
             nfServer.ServerStarted += NfServer_ServerStarted;
+
             await nfServer.ListenAsync();
 
             Console.ReadLine();
