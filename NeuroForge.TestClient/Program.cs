@@ -1,16 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using NeuroForge.Client.Network;
 
 namespace NeuroForge.TestClient
 {
     internal class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            var client = new NeuroForgeClient(System.Net.IPAddress.Parse("127.0.0.1"), 4411);
+            await client.ConnectAsync();
             Console.ReadLine();
         }
     }

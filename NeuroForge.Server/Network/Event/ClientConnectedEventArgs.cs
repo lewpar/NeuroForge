@@ -2,11 +2,11 @@
 
 namespace NeuroForge.Server.Network.Event
 {
-    public class NeuroClientConnectedEventArgs : EventArgs
+    public class ClientConnectedEventArgs : EventArgs
     {
         public TcpClient Client { get; private set; }
 
-        public NeuroClientConnectedEventArgs(TcpClient client)
+        public ClientConnectedEventArgs(TcpClient client)
         {
             this.Client = client;
         }

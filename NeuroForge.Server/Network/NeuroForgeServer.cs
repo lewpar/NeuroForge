@@ -1,12 +1,14 @@
-﻿using NeuroForge.Server.Network.Event;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
+
+using NeuroForge.Server.Network.Event;
 
 namespace NeuroForge.Server.Network
 {
     public class NeuroForgeServer
     {
-        public event EventHandler<NeuroClientConnectedEventArgs> ClientConnected;
+        public event EventHandler<ClientConnectedEventArgs> ClientConnected;
+        public event EventHandler<EventArgs> ServerStarted;
 
         private TcpListener _listener;
 
@@ -21,18 +23,20 @@ namespace NeuroForge.Server.Network
             _exitToken = _exitTokenSrc.Token;
         }
 
-        public async Task Listen()
+        public async Task ListenAsync()
         {
             _listener.Start();
 
-            while(!_exitToken.IsCancellationRequested)
+            OnServerStarted(new EventArgs());
+
+            while (!_exitToken.IsCancellationRequested)
             {
                 var client = await _listener.AcceptTcpClientAsync();
-                HandleClient(client);
+                HandleClientAsync(client);
             }
         }
 
-        public async Task Stop()
+        public async Task StopAsync()
         {
             await Task.Run(() =>
             {
@@ -41,14 +45,19 @@ namespace NeuroForge.Server.Network
             });
         }
 
-        private async void HandleClient(TcpClient client)
+        private async void HandleClientAsync(TcpClient client)
         {
-            OnClientConnected(new NeuroClientConnectedEventArgs(client));
+            OnClientConnected(new ClientConnectedEventArgs(client));
         }
 
-        private void OnClientConnected(NeuroClientConnectedEventArgs e)
+        private void OnClientConnected(ClientConnectedEventArgs e)
         {
             ClientConnected?.Invoke(this, e);
+        }
+
+        private void OnServerStarted(EventArgs e)
+        {
+            ServerStarted?.Invoke(this, e);
         }
     }
 }
