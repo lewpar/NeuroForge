@@ -7,4 +7,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\NeuroForge.Server\NeuroForge.Server.csproj" />
+  </ItemGroup>
+
 </Project>
