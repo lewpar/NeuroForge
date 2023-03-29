@@ -1,7 +1,9 @@
 ﻿using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 
 namespace NeuroForge.Client.Network
 {
@@ -24,7 +26,10 @@ namespace NeuroForge.Client.Network
         {
             await _client.ConnectAsync(_ipAddress, _port);
 
-            //TODO: Authenticate server/client certificate with SslStream.
+            var sslStream = new SslStream(_client.GetStream(), false, (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) => true);
+            await sslStream.AuthenticateAsClientAsync("localhost");
+
+            Console.WriteLine("Passed Handshake");
         }
     }
 }

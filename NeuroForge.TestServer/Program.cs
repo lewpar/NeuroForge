@@ -16,7 +16,7 @@ namespace NeuroForge.TestServer
 
             try
             {
-                await nfServer.LoadCertificateAsync(StoreName.My, StoreLocation.LocalMachine, "TestCertificate");
+                await nfServer.LoadCertificateAsync(StoreName.My, StoreLocation.CurrentUser, "localhost");
                 await nfServer.ListenAsync();
             }
             catch(Exception ex)

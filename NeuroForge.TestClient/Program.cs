@@ -1,4 +1,5 @@
 ﻿using NeuroForge.Client.Network;
+using System.Net;
 
 namespace NeuroForge.TestClient
 {
@@ -6,7 +7,7 @@ namespace NeuroForge.TestClient
     {
         public static async Task Main(string[] args)
         {
-            var client = new NeuroForgeClient(System.Net.IPAddress.Parse("127.0.0.1"), 4411);
+            var client = new NeuroForgeClient(IPAddress.Loopback, 4411);
             await client.ConnectAsync();
             Console.WriteLine("Connected to server.");
             Console.ReadLine();

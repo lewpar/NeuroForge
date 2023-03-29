@@ -4,7 +4,7 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
-
+using System.Text;
 using NeuroForge.Server.Network.Events;
 using NeuroForge.Server.Network.Exceptions;
 
@@ -83,7 +83,6 @@ namespace NeuroForge.Server.Network
                 return;
             }
 
-            // TODO: Remove me
             Console.WriteLine("Passed handshake.");
         }
 
@@ -98,20 +97,23 @@ namespace NeuroForge.Server.Network
                     throw new CertificateConfigurationException("SSLCertificate was null!");
                 }
 
-                // TODO: Server gets stuck here waiting for authentication from client.
-                await sslStream.AuthenticateAsServerAsync(_sslCertificate, clientCertificateRequired: false, checkCertificateRevocation: true);
+                await sslStream.AuthenticateAsServerAsync(
+                    serverCertificate: _sslCertificate, 
+                    clientCertificateRequired: false, 
+                    enabledSslProtocols: SslProtocols.None, 
+                    checkCertificateRevocation: true);
 
                 sslStream.ReadTimeout = 5000;
                 sslStream.WriteTimeout = 5000;
 
                 _connectedClients.Add(client);
             }
-            catch (AuthenticationException ex)
+            catch (Exception)
             {
                 sslStream.Close();
                 client.Close();
 
-                throw ex;
+                return false;
             }
 
             return true;
