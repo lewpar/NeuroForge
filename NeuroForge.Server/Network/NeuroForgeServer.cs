@@ -22,7 +22,7 @@ namespace NeuroForge.Server.Network
 
         private X509Certificate2? _sslCertificate;
 
-        private List<TcpClient> _connectedClients;
+        private List<NeuroForgeUser> _connectedUsers;
 
         public NeuroForgeServer(IPAddress ipAddress, int port)
         {
@@ -31,7 +31,7 @@ namespace NeuroForge.Server.Network
             _exitTokenSrc = new CancellationTokenSource();
             _exitToken = _exitTokenSrc.Token;
 
-            _connectedClients = new List<TcpClient>();
+            _connectedUsers = new List<NeuroForgeUser>();
         }
 
         public async Task LoadCertificateAsync(StoreName storeName, StoreLocation storeLoc, string certName)
@@ -73,28 +73,32 @@ namespace NeuroForge.Server.Network
             });
         }
 
-        private async Task DiconnectClientAsync(TcpClient client)
+        private async Task DiconnectClientAsync(NeuroForgeUser user)
         {
-            client.Close();
+            //TODO: Send disconnect packet.
+
+            user.Stream.Close();
+            user.Client.Close();
         }
 
         private async Task HandleClientAsync(TcpClient client)
         {
-            if(!await HandshakeAsync(client))
+            var user = new NeuroForgeUser(client);
+
+            if(!await HandshakeAsync(user))
             {
-                await DiconnectClientAsync(client);
+                await DiconnectClientAsync(user);
                 return;
             }
 
-            OnClientConnected(new ClientConnectedEventArgs(client));
+            OnClientConnected(new ClientConnectedEventArgs(user));
 
+            _connectedUsers.Add(user);
             Console.WriteLine("Passed handshake.");
         }
 
-        private async Task<bool> HandshakeAsync(TcpClient client)
+        private async Task<bool> HandshakeAsync(NeuroForgeUser user)
         {
-            var sslStream = new SslStream(client.GetStream(), false);
-
             try
             {
                 if (_sslCertificate == null)
@@ -102,16 +106,14 @@ namespace NeuroForge.Server.Network
                     throw new CertificateConfigurationException("SSLCertificate was null!");
                 }
 
-                await sslStream.AuthenticateAsServerAsync(
+                await user.Stream.AuthenticateAsServerAsync(
                     serverCertificate: _sslCertificate, 
                     clientCertificateRequired: false, 
                     enabledSslProtocols: SslProtocols.None, 
                     checkCertificateRevocation: true);
 
-                sslStream.ReadTimeout = 5000;
-                sslStream.WriteTimeout = 5000;
-
-                _connectedClients.Add(client);
+                user.Stream.ReadTimeout = 5000;
+                user.Stream.WriteTimeout = 5000;
             }
             catch (Exception)
             {

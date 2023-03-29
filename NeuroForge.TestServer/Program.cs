@@ -35,7 +35,7 @@ namespace NeuroForge.TestServer
 
         private static void NfServer_ClientConnected(object? sender, ClientConnectedEventArgs e)
         {
-            Console.WriteLine($"Client '{e.Client.Client.RemoteEndPoint}' connected.");
+            Console.WriteLine($"Client '{e.User.Client.Client.RemoteEndPoint}' connected.");
         }
     }
 }
