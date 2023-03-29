@@ -130,7 +130,7 @@ namespace NeuroForge.Server.Network
 
         private async Task<bool> AuthenticateAsync(NeuroForgeUser user)
         {
-            return true;
+            return await Task.FromResult<bool>(true);
         }
 
         private void OnClientConnected(ClientConnectedEventArgs e)
