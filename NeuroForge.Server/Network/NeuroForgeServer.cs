@@ -73,11 +73,16 @@ namespace NeuroForge.Server.Network
             });
         }
 
+        private async Task DiconnectClientAsync(TcpClient client)
+        {
+            client.Close();
+        }
+
         private async void HandleClientAsync(TcpClient client)
         {
             if(!await HandshakeAsync(client))
             {
-                Debug.WriteLine("An unexpected error occurred during client handshake.");
+                await DiconnectClientAsync(client);
                 return;
             }
 
@@ -110,9 +115,6 @@ namespace NeuroForge.Server.Network
             }
             catch (Exception)
             {
-                sslStream.Close();
-                client.Close();
-
                 return false;
             }
 
