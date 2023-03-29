@@ -78,7 +78,7 @@ namespace NeuroForge.Server.Network
             client.Close();
         }
 
-        private async void HandleClientAsync(TcpClient client)
+        private async Task HandleClientAsync(TcpClient client)
         {
             if(!await HandshakeAsync(client))
             {
