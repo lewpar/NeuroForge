@@ -91,10 +91,15 @@ namespace NeuroForge.Server.Network
                 return;
             }
 
+            if(!await AuthenticateAsync(user))
+            {
+                await DiconnectClientAsync(user);
+                return;
+            }
+
             OnClientConnected(new ClientConnectedEventArgs(user));
 
             _connectedUsers.Add(user);
-            Console.WriteLine("Passed handshake.");
         }
 
         private async Task<bool> HandshakeAsync(NeuroForgeUser user)
@@ -120,6 +125,11 @@ namespace NeuroForge.Server.Network
                 return false;
             }
 
+            return true;
+        }
+
+        private async Task<bool> AuthenticateAsync(NeuroForgeUser user)
+        {
             return true;
         }
 

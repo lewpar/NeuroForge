@@ -28,8 +28,6 @@ namespace NeuroForge.Client.Network
 
             var sslStream = new SslStream(_client.GetStream(), false, (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) => true);
             await sslStream.AuthenticateAsClientAsync("localhost");
-
-            Console.WriteLine("Passed Handshake");
         }
     }
 }
