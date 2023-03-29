@@ -75,13 +75,13 @@ namespace NeuroForge.Server.Network
 
         private async void HandleClientAsync(TcpClient client)
         {
-            OnClientConnected(new ClientConnectedEventArgs(client));
-
             if(!await HandshakeAsync(client))
             {
                 Debug.WriteLine("An unexpected error occurred during client handshake.");
                 return;
             }
+
+            OnClientConnected(new ClientConnectedEventArgs(client));
 
             Console.WriteLine("Passed handshake.");
         }
