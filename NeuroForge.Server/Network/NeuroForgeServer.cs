@@ -169,9 +169,13 @@ namespace NeuroForge.Server.Network
                 return false;
             }
 
-            // TODO: Replace with DB auth.
-            if(userCreds.Username != "username" ||
-                userCreds.HashedPassword != "password")
+            var command = MySQL.Connection.CreateCommand();
+            command.CommandText = "SELECT username, password FROM accounts WHERE username = @Username AND password = @Password;";
+            command.Parameters.AddWithValue("Username", userCreds.Username);
+            command.Parameters.AddWithValue("Password", userCreds.HashedPassword);
+
+            using var reader = command.ExecuteReader();
+            if(!reader.HasRows)
             {
                 return false;
             }
