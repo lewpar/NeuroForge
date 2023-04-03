@@ -7,7 +7,6 @@ namespace NeuroForge.TestClient
     {
         public static async Task Main(string[] args)
         {
-            //var client = new NeuroForgeClient(Dns.GetHostAddresses("sherman-storm.bnr.la")[0].MapToIPv4(), 4411);
             var client = new NeuroForgeClient(IPAddress.Parse("127.0.0.1"), 4411);
 
             Console.WriteLine("Connecting to server..");
