@@ -2,9 +2,10 @@
 using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
-
+using System.Text;
 using NeuroForge.Server.Network.Events;
 using NeuroForge.Server.Network.Exceptions;
+using NeuroForge.Shared.Network;
 
 namespace NeuroForge.Server.Network
 {
@@ -89,15 +90,26 @@ namespace NeuroForge.Server.Network
                 return;
             }
 
-            if(!await AuthenticateAsync(user))
-            {
-                await DiconnectClientAsync(user);
-                return;
-            }
-
             OnClientConnected(new ClientConnectedEventArgs(user));
-
             _connectedUsers.Add(user);
+
+            await HandleUserMessageAsync(user);
+        }
+
+        private async Task HandleUserMessageAsync(NeuroForgeUser user)
+        {
+            Console.WriteLine("Waiting for messages..");
+
+            while(!_exitToken.IsCancellationRequested)
+            {
+                PacketType packetType = (PacketType)await NetworkHelper.ReadInt32Async(user.Stream);
+                int packetSize = await NetworkHelper.ReadInt32Async(user.Stream);
+
+                byte[] data = await NetworkHelper.ReadBytesAsync(user.Stream, packetSize);
+
+                // TODO: Remove this and put a packet handler here.
+                Console.WriteLine($"Got packet {packetType} with size {packetSize} and data {Encoding.UTF8.GetString(data)}");
+            }
         }
 
         private async Task<bool> HandshakeAsync(NeuroForgeUser user)

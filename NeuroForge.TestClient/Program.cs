@@ -10,6 +10,7 @@ namespace NeuroForge.TestClient
             var client = new NeuroForgeClient(IPAddress.Loopback, 4411);
             await client.ConnectAsync();
             Console.WriteLine("Connected to server.");
+            await client.AuthenticateAsync();
             Console.ReadLine();
         }
     }
