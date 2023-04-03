@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using NeuroForge.Server.Database;
 using NeuroForge.Server.Network.Events;
 using NeuroForge.Server.Network.Exceptions;
 using NeuroForge.Shared.Network;
@@ -22,6 +23,7 @@ namespace NeuroForge.Server.Network
         private CancellationTokenSource _exitTokenSrc;
 
         public X509Certificate2? SslCertificate { get; private set; }
+        public MySQLService MySQL { get; private set; }
 
         private List<NeuroForgeUser> _connectedUsers;
 
@@ -33,6 +35,8 @@ namespace NeuroForge.Server.Network
             _exitToken = _exitTokenSrc.Token;
 
             _connectedUsers = new List<NeuroForgeUser>();
+
+            MySQL = new MySQLService();
         }
 
         public async Task LoadCertificateAsync(StoreName storeName, StoreLocation storeLoc, string certName)
