@@ -21,7 +21,7 @@ namespace NeuroForge.Server.Network
         private CancellationToken _exitToken;
         private CancellationTokenSource _exitTokenSrc;
 
-        private X509Certificate2? _sslCertificate;
+        public X509Certificate2? SslCertificate { get; private set; }
 
         private List<NeuroForgeUser> _connectedUsers;
 
@@ -43,13 +43,13 @@ namespace NeuroForge.Server.Network
                 store.Open(OpenFlags.ReadOnly);
 
                 X509Certificate2Collection certs = store.Certificates.Find(X509FindType.FindBySubjectName, certName, false);
-                _sslCertificate = certs[0];
+                SslCertificate = certs[0];
             });
         }
 
         public async Task ListenAsync()
         {
-            if(_sslCertificate == null)
+            if(SslCertificate == null)
             {
                 throw new CertificateConfigurationException("SSLCertificate was null!");
             }
@@ -126,13 +126,13 @@ namespace NeuroForge.Server.Network
         {
             try
             {
-                if (_sslCertificate == null)
+                if (SslCertificate == null)
                 {
                     throw new CertificateConfigurationException("SSLCertificate was null!");
                 }
 
                 await user.Stream.AuthenticateAsServerAsync(
-                    serverCertificate: _sslCertificate, 
+                    serverCertificate: SslCertificate, 
                     clientCertificateRequired: false, 
                     enabledSslProtocols: SslProtocols.None, 
                     checkCertificateRevocation: true);

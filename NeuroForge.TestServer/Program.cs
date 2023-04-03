@@ -18,6 +18,8 @@ namespace NeuroForge.TestServer
             try
             {
                 await nfServer.LoadCertificateAsync(StoreName.My, StoreLocation.CurrentUser, "localhost");
+                Console.WriteLine($"Found certificate: {nfServer.SslCertificate?.FriendlyName}");
+                Console.WriteLine($"{nfServer.SslCertificate?.ToString()}");
                 await nfServer.ListenAsync();
             }
             catch(Exception ex)
