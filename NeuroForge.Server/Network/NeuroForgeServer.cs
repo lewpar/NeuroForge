@@ -6,12 +6,14 @@ using System.Text;
 using NeuroForge.Server.Network.Events;
 using NeuroForge.Server.Network.Exceptions;
 using NeuroForge.Shared.Network;
+using NeuroForge.Shared.Network.Authentication;
 
 namespace NeuroForge.Server.Network
 {
     public class NeuroForgeServer
     {
         public event EventHandler<ClientConnectedEventArgs>? ClientConnected;
+        public event EventHandler<ClientConnectedEventArgs>? ClientAuthenticated;
         public event EventHandler<EventArgs>? ServerStarted;
 
         private TcpListener _listener;
@@ -83,14 +85,22 @@ namespace NeuroForge.Server.Network
         private async Task HandleClientAsync(TcpClient client)
         {
             var user = new NeuroForgeUser(client);
+            OnClientConnected(new ClientConnectedEventArgs(user));
 
-            if(!await HandshakeAsync(user))
+            if (!await HandshakeAsync(user))
             {
                 await DiconnectClientAsync(user);
                 return;
             }
 
-            OnClientConnected(new ClientConnectedEventArgs(user));
+            if(!await AuthenticateAsync(user)) 
+            {
+                await DiconnectClientAsync(user);
+                return;
+            }
+
+            OnClientAuthenticated(new ClientConnectedEventArgs(user));
+
             _connectedUsers.Add(user);
 
             await HandleUserMessageAsync(user);
@@ -140,12 +150,45 @@ namespace NeuroForge.Server.Network
 
         private async Task<bool> AuthenticateAsync(NeuroForgeUser user)
         {
-            return await Task.FromResult<bool>(true);
+            PacketType packetType = (PacketType)await NetworkHelper.ReadInt32Async(user.Stream);
+            if (packetType != PacketType.Auth)
+            {
+                return false;
+            }
+
+            int packetSize = await NetworkHelper.ReadInt32Async(user.Stream);
+            byte[] data = await NetworkHelper.ReadBytesAsync(user.Stream, packetSize);
+
+            var userCreds = NetworkHelper.Deserialize<UserCredentials>(data);
+            if(userCreds == null)
+            {
+                return false;
+            }
+
+            // TODO: Replace with DB auth.
+            if(userCreds.Username != "username" ||
+                userCreds.HashedPassword != "password")
+            {
+                return false;
+            }
+
+            string result = "OK";
+            data = Encoding.UTF8.GetBytes(result);
+            await NetworkHelper.WriteInt32Async(user.Stream, (int)PacketType.Auth);
+            await NetworkHelper.WriteInt32Async(user.Stream, data.Length);
+            await NetworkHelper.WriteBytesAsync(user.Stream, data);
+
+            return true;
         }
 
         private void OnClientConnected(ClientConnectedEventArgs e)
         {
             ClientConnected?.Invoke(this, e);
+        }
+
+        private void OnClientAuthenticated(ClientConnectedEventArgs e)
+        {
+            ClientAuthenticated?.Invoke(this, e);
         }
 
         private void OnServerStarted(EventArgs e)

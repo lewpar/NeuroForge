@@ -4,12 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NeuroForge.Shared.Network
+namespace NeuroForge.Shared.Network.Packet
 {
-    public enum PacketType
+    public interface IPacket
     {
-        Unknown = 0,
-        Auth = 1,
-        Disconnect = 2
+        PacketType Type { get; }
+        int Length { get; }
     }
 }

@@ -12,6 +12,7 @@ namespace NeuroForge.TestServer
             var nfServer = new NeuroForgeServer(System.Net.IPAddress.Any, 4411);
 
             nfServer.ClientConnected += NfServer_ClientConnected;
+            nfServer.ClientAuthenticated += NfServer_ClientAuthenticated;
             nfServer.ServerStarted += NfServer_ServerStarted;
 
             try
@@ -26,6 +27,11 @@ namespace NeuroForge.TestServer
             }
 
             Console.ReadLine();
+        }
+
+        private static void NfServer_ClientAuthenticated(object? sender, ClientConnectedEventArgs e)
+        {
+            Console.WriteLine($"Client '{e.User.Client.Client.RemoteEndPoint}' authenticated.");
         }
 
         private static void NfServer_ServerStarted(object? sender, EventArgs e)

@@ -1,4 +1,5 @@
 ﻿using NeuroForge.Shared.Network;
+using NeuroForge.Shared.Network.Authentication;
 using System.IO;
 using System.Net;
 using System.Net.Security;
@@ -32,17 +33,34 @@ namespace NeuroForge.Client.Network
             await _sslStream.AuthenticateAsClientAsync("localhost");
         }
 
-        public async Task AuthenticateAsync()
+        public async Task<bool> AuthenticateAsync(string username, string password)
         {
-            // TODO: Remove this an add real authentication logic here.
-            Console.WriteLine("Sending message..");
-
-            string message = "Hello World!";
-            byte[] data = Encoding.UTF8.GetBytes(message);
+            // Request
+            var userCreds = new UserCredentials(username, password);
+            var userCredsData = NetworkHelper.Serialize<UserCredentials>(userCreds);
 
             await NetworkHelper.WriteInt32Async(_sslStream, (int)PacketType.Auth);
-            await NetworkHelper.WriteInt32Async(_sslStream, data.Length);
-            await NetworkHelper.WriteBytesAsync(_sslStream, data);
+            await NetworkHelper.WriteInt32Async(_sslStream, userCredsData.Length);
+            await NetworkHelper.WriteBytesAsync(_sslStream, userCredsData);
+
+            // Response
+            PacketType packetType = (PacketType)await NetworkHelper.ReadInt32Async(_sslStream);
+            if(packetType != PacketType.Auth)
+            {
+                return false;
+            }
+
+            int packetLength = await NetworkHelper.ReadInt32Async(_sslStream);
+            byte[] packetData = await NetworkHelper.ReadBytesAsync(_sslStream, packetLength);
+
+            string result = Encoding.UTF8.GetString(packetData);
+
+            if(result != "OK")
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

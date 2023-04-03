@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Security;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace NeuroForge.Shared.Network
@@ -53,6 +54,16 @@ namespace NeuroForge.Shared.Network
             }
 
             await stream.WriteAsync(data, 0, data.Length);
+        }
+
+        public static byte[] Serialize<T>(T obj)
+        {
+            return Encoding.UTF8.GetBytes(JsonSerializer.Serialize<T>(obj));
+        }
+
+        public static T Deserialize<T>(byte[] data)
+        {
+            return JsonSerializer.Deserialize<T>(Encoding.UTF8.GetString(data));
         }
     }
 }
