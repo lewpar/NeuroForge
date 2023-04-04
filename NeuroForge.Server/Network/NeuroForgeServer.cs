@@ -28,7 +28,7 @@ namespace NeuroForge.Server.Network
 
         private List<NeuroForgeUser> _connectedUsers;
 
-        private Dictionary<PacketType, Func<NeuroForgeUser, Task<PacketHandlerResult>>> _packetHandlers;
+        private Dictionary<PacketType, Func<NeuroForgeServer, NeuroForgeUser, Task<PacketHandlerResult>>> _packetHandlers;
 
         public NeuroForgeServer(IPAddress ipAddress, int port)
         {
@@ -41,7 +41,7 @@ namespace NeuroForge.Server.Network
 
             MySQL = new MySQLService();
 
-            _packetHandlers = new Dictionary<PacketType, Func<NeuroForgeUser, Task<PacketHandlerResult>>>
+            _packetHandlers = new Dictionary<PacketType, Func<NeuroForgeServer, NeuroForgeUser, Task<PacketHandlerResult>>>
             {
                 { PacketType.Auth, PacketHandlers.HandleAuthAsync }
             };
@@ -118,7 +118,7 @@ namespace NeuroForge.Server.Network
             {
                 PacketType packetType = (PacketType)await NetworkHelper.ReadInt32Async(user.Stream);
 
-                PacketHandlerResult result = await _packetHandlers[packetType].Invoke(user);
+                PacketHandlerResult result = await _packetHandlers[packetType].Invoke(this, user);
 
                 if(!result.Result)
                 {

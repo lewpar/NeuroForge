@@ -10,7 +10,7 @@ namespace NeuroForge.Server.Network
 {
     public class PacketHandlers
     {
-        public static async Task<PacketHandlerResult> HandleAuthAsync(NeuroForgeUser user)
+        public static async Task<PacketHandlerResult> HandleAuthAsync(NeuroForgeServer server, NeuroForgeUser user)
         {
             int packetSize = await NetworkHelper.ReadInt32Async(user.Stream);
             byte[] data = await NetworkHelper.ReadBytesAsync(user.Stream, packetSize);
@@ -21,14 +21,7 @@ namespace NeuroForge.Server.Network
                 return new PacketHandlerResult(false, "Malformed packet data.");
             }
 
-            // TODO: Replace with DB call.
-            if(userCreds.Username != "username" ||
-                userCreds.HashedPassword != "password")
-            {
-                return new PacketHandlerResult(false, "Invalid user credentials.");
-            }
-
-            /*var command = MySQL.Connection.CreateCommand();
+            var command = server.MySQL.Connection.CreateCommand();
             command.CommandText = "SELECT username, password FROM accounts WHERE username = @Username AND password = @Password;";
             command.Parameters.AddWithValue("Username", userCreds.Username);
             command.Parameters.AddWithValue("Password", userCreds.HashedPassword);
@@ -36,8 +29,8 @@ namespace NeuroForge.Server.Network
             using var reader = command.ExecuteReader();
             if (!reader.HasRows)
             {
-                return false;
-            }*/
+                return new PacketHandlerResult(false, "Invalid user credentials.");
+            }
 
             string result = "OK";
             data = Encoding.UTF8.GetBytes(result);
