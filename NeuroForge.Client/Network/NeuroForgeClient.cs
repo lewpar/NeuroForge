@@ -19,18 +19,55 @@ namespace NeuroForge.Client.Network
 
         public NeuroForgeClient(IPAddress ipAddress, int port)
         {
-            _client = new TcpClient();
-
             _ipAddress = ipAddress;
             _port = port;
         }
 
-        public async Task ConnectAsync()
+        public async Task<bool> ConnectAsync()
         {
-            await _client.ConnectAsync(_ipAddress, _port);
+            try
+            {
+                _client = new TcpClient();
+                await _client.ConnectAsync(_ipAddress, _port);
 
-            _sslStream = new SslStream(_client.GetStream(), false, (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) => true);
-            await _sslStream.AuthenticateAsClientAsync("localhost");
+                _sslStream = new SslStream(_client.GetStream(), false, (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) => true);
+                await _sslStream.AuthenticateAsClientAsync("localhost");
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex);
+                return false;
+            }
+
+            return true;
+        }
+
+        public async Task DisconnectAsync()
+        {
+            await Task.Run(() =>
+            {
+                _sslStream.Close();
+                _client.Close();
+            });
+        }
+
+        public async Task<bool> TestConnectionAsync()
+        {
+            try
+            {
+                if(_sslStream == null || _client == null)
+                {
+                    return false;
+                }
+
+                await NetworkHelper.WriteInt32Async(_sslStream, (int)PacketType.TestConnection);
+
+                return true;
+            }
+            catch(Exception)
+            {
+                return false;
+            }
         }
 
         public async Task<bool> AuthenticateAsync(string username, string password)

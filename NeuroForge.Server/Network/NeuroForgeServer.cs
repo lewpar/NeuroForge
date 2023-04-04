@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -27,6 +28,8 @@ namespace NeuroForge.Server.Network
 
         private List<NeuroForgeUser> _connectedUsers;
 
+        private Dictionary<PacketType, Func<NeuroForgeUser, Task<PacketHandlerResult>>> _packetHandlers;
+
         public NeuroForgeServer(IPAddress ipAddress, int port)
         {
             _listener = new TcpListener(ipAddress, port);
@@ -37,6 +40,11 @@ namespace NeuroForge.Server.Network
             _connectedUsers = new List<NeuroForgeUser>();
 
             MySQL = new MySQLService();
+
+            _packetHandlers = new Dictionary<PacketType, Func<NeuroForgeUser, Task<PacketHandlerResult>>>
+            {
+                { PacketType.Auth, PacketHandlers.HandleAuthAsync }
+            };
         }
 
         public async Task LoadCertificateAsync(StoreName storeName, StoreLocation storeLoc, string certName)
@@ -65,7 +73,7 @@ namespace NeuroForge.Server.Network
             while (!_exitToken.IsCancellationRequested)
             {
                 var client = await _listener.AcceptTcpClientAsync();
-                HandleClientAsync(client);
+                HandleClientAsync(client); // Fire and Forget
             }
         }
 
@@ -78,9 +86,13 @@ namespace NeuroForge.Server.Network
             });
         }
 
-        private async Task DiconnectClientAsync(NeuroForgeUser user)
+        private async Task DisconnectUserAsync(NeuroForgeUser user, string reason)
         {
-            //TODO: Send disconnect packet.
+            byte[] data = Encoding.UTF8.GetBytes(reason);
+
+            await NetworkHelper.WriteInt32Async(user.Stream, (int)PacketType.Disconnect);
+            await NetworkHelper.WriteInt32Async(user.Stream, data.Length);
+            await NetworkHelper.WriteBytesAsync(user.Stream, data);
 
             user.Stream.Close();
             user.Client.Close();
@@ -93,36 +105,26 @@ namespace NeuroForge.Server.Network
 
             if (!await HandshakeAsync(user))
             {
-                await DiconnectClientAsync(user);
+                await DisconnectUserAsync(user, "Failed SSL handshake.");
                 return;
             }
 
-            if(!await AuthenticateAsync(user)) 
-            {
-                await DiconnectClientAsync(user);
-                return;
-            }
-
-            OnClientAuthenticated(new ClientConnectedEventArgs(user));
-
-            _connectedUsers.Add(user);
-
-            await HandleUserMessageAsync(user);
+            await HandleUserMessagesAsync(user);
         }
 
-        private async Task HandleUserMessageAsync(NeuroForgeUser user)
+        private async Task HandleUserMessagesAsync(NeuroForgeUser user)
         {
-            Console.WriteLine("Waiting for messages..");
-
             while(!_exitToken.IsCancellationRequested)
             {
                 PacketType packetType = (PacketType)await NetworkHelper.ReadInt32Async(user.Stream);
-                int packetSize = await NetworkHelper.ReadInt32Async(user.Stream);
 
-                byte[] data = await NetworkHelper.ReadBytesAsync(user.Stream, packetSize);
+                PacketHandlerResult result = await _packetHandlers[packetType].Invoke(user);
 
-                // TODO: Remove this and put a packet handler here.
-                Console.WriteLine($"Got packet {packetType} with size {packetSize} and data {Encoding.UTF8.GetString(data)}");
+                if(!result.Result)
+                {
+                    await DisconnectUserAsync(user, result.Message);
+                    return;
+                }
             }
         }
 
@@ -146,45 +148,9 @@ namespace NeuroForge.Server.Network
             }
             catch (Exception)
             {
+
                 return false;
             }
-
-            return true;
-        }
-
-        private async Task<bool> AuthenticateAsync(NeuroForgeUser user)
-        {
-            PacketType packetType = (PacketType)await NetworkHelper.ReadInt32Async(user.Stream);
-            if (packetType != PacketType.Auth)
-            {
-                return false;
-            }
-
-            int packetSize = await NetworkHelper.ReadInt32Async(user.Stream);
-            byte[] data = await NetworkHelper.ReadBytesAsync(user.Stream, packetSize);
-
-            var userCreds = NetworkHelper.Deserialize<UserCredentials>(data);
-            if(userCreds == null)
-            {
-                return false;
-            }
-
-            var command = MySQL.Connection.CreateCommand();
-            command.CommandText = "SELECT username, password FROM accounts WHERE username = @Username AND password = @Password;";
-            command.Parameters.AddWithValue("Username", userCreds.Username);
-            command.Parameters.AddWithValue("Password", userCreds.HashedPassword);
-
-            using var reader = command.ExecuteReader();
-            if(!reader.HasRows)
-            {
-                return false;
-            }
-
-            string result = "OK";
-            data = Encoding.UTF8.GetBytes(result);
-            await NetworkHelper.WriteInt32Async(user.Stream, (int)PacketType.Auth);
-            await NetworkHelper.WriteInt32Async(user.Stream, data.Length);
-            await NetworkHelper.WriteBytesAsync(user.Stream, data);
 
             return true;
         }

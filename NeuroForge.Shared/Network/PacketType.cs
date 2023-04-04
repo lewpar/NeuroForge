@@ -10,6 +10,7 @@ namespace NeuroForge.Shared.Network
     {
         Unknown = 0,
         Auth = 1,
-        Disconnect = 2
+        Disconnect = 2,
+        TestConnection = 3
     }
 }
